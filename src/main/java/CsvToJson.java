@@ -6,37 +6,39 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class CsvToJson {
 
-    String url = "jdbc:h2:~/test";
-    String user = "sa";
-    String password = "";
+    static String url = "jdbc:h2:~/test";
+    static String user = "sa";
+    static String password = "";
 
-    private Connection getConnection() throws SQLException {
+    static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(url, user, password);
     }
 
-    public void insert(List<Ingreso> ingresos) throws SQLException {
+    public static void insert(List<Ingreso> ingresos) throws SQLException {
         final String sql = "INSERT INTO Ingreso(id, anho, clasificacion, empresa, ingresos) VALUES (?, ?, ?, ?, ?)";
-        Connection con = getConnection();
-        for (Ingreso nuevoIngreso : ingresos) {
-            //sql = "INSERT INTO Ingreso(" + nuevoIngreso + ") VALUES (id, anho, clasificacion, empresa, ingresos)";
-            try(PreparedStatement comando = con.prepareStatement(sql)){
-                comando.setInt(1, nuevoIngreso.getId());
-                comando.setInt(2, nuevoIngreso.getAnho());
-                comando.setInt(3, nuevoIngreso.getClasificacion());
-                comando.setString(4, nuevoIngreso.getEmpresa());
-                comando.setDouble(5, nuevoIngreso.getIngresos());
-                comando.execute();
+        try (Connection con = getConnection()){
+        Statement dropTable = con.createStatement();
+        dropTable.execute("TRUNCATE TABLE Ingreso");
+            for (Ingreso nuevoIngreso : ingresos) {
+                //sql = "INSERT INTO Ingreso(" + nuevoIngreso + ") VALUES (id, anho, clasificacion, empresa, ingresos)";
+                try(PreparedStatement comando = con.prepareStatement(sql)){
+                    comando.setInt(1, nuevoIngreso.getId());
+                    comando.setInt(2, nuevoIngreso.getAnho());
+                    comando.setInt(3, nuevoIngreso.getClasificacion());
+                    comando.setString(4, nuevoIngreso.getEmpresa());
+                    comando.setDouble(5, nuevoIngreso.getIngresos());
+                    comando.execute();
+
+                }
             }
         }
+
         //por cada ingreso, añade un registro
     }
 
@@ -48,9 +50,9 @@ public class CsvToJson {
         csvReader.skip(1);
         csvReader.forEach(linea -> data.add(Ingreso.from(linea)));
 
-        for (int i = 1; i < data.size(); i++){
+        for (int i = 0; i < data.size(); i++){
             Ingreso fila = data.get(i);
-            fila.setId(i);
+            fila.setId(i+1);
         }
         return data;
     }
@@ -61,7 +63,7 @@ public class CsvToJson {
         obj.writeValue(new File(path), ingresos);
     }
 
-    public List<Ingreso> readJson(Path path) throws IOException {
+    public static List<Ingreso> readJson(Path path) throws IOException {
         ObjectMapper obj = new ObjectMapper();
         return obj.readValue(path.toFile(), new TypeReference<List<Ingreso>>() {});
     }

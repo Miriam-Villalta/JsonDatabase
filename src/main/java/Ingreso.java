@@ -15,6 +15,10 @@ public class Ingreso {
         this.ingresos = ingresos;
     }
 
+    public Ingreso(){
+
+    }
+
     public static Ingreso from(String[] linea) {
         return new Ingreso(Integer.parseInt(linea[0]),
                 Integer.parseInt(linea[1]),
